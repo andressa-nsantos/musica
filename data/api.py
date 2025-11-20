@@ -12,11 +12,12 @@ import re
 from pathlib import Path
 from tqdm import tqdm  # Adicionando a importação do tqdm
 import random  # Para gerar pausas aleatórias
+from selenium.common.exceptions import NoSuchElementException # para identificar se há capotraste (para depois mudar o tom)
 
 options = Options()
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
-driver.implicitly_wait(0)
+
 # Configurar o diretório de saída
 output_dir = Path("processed")
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -26,18 +27,8 @@ def buscar_letra_e_detalhes(musica, artista, id_musica):
     try:
         # Acessar o site cifraclub.com.br
         driver.get("https://www.cifraclub.com.br")
-        print("Carregou, tentando achar input...")
-        start = time.time()
-        search_box = WebDriverWait(driver, 15).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "input.header-searchInput.js-modal-trigger")))
-        print("Achou em:", time.time() - start, "segundos") # métrica de tempo para encontrar a caixa de input
-
-        try:
-            close_popup = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".cc-btn.cc-dismiss, .modal-close, .sib-close-btn")))
-            close_popup.click()
-        except:
-            pass
+        search_box = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "input.header-searchInput.js-modal-trigger")))
+        
         WebDriverWait(driver, 3).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "input.header-searchInput.js-modal-trigger")))
 
         # Buscar somente o nome da música na barra de pesquisa
@@ -48,95 +39,90 @@ def buscar_letra_e_detalhes(musica, artista, id_musica):
         
         # Clicar na primeira sugestão
         first_suggestion = WebDriverWait(driver, 3).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".modal.suggest.header-suggest .list-suggest a"))
-        )
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".modal.suggest.header-suggest .list-suggest a")))
         first_suggestion.click()
+
+        # Aguardar o carregamento completo da página
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.cifra_cnt")))
+
+        # Capturar a letra e a cifra
+        letra_e_cifra_elements = driver.find_elements(By.CSS_SELECTOR, "div.cifra_cnt pre")
+        letra_e_cifra = "\n".join([element.text for element in letra_e_cifra_elements])
+        # Capturar o tom da música
+        tom = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.cifra_cnt a"))).text
+        # Capturar se usa capotraste
+        try:
+            elemento_capo = driver.find_element(By.CSS_SELECTOR, "#cifra_capo")
+            capo_usado = True
+            capo_texto = elemento_capo.text.strip()
+        except NoSuchElementException:
+            capo_usado = False
+            capo_texto = None
+        capotraste = f'{capo_usado} {capo_texto}'
+        # Capturar o nome da música e do artista
+        nome_musica = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.t1"))).text
+        nome_artista = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h2.t3 a"))).text
+        # Capturar o compositor
+        compositor = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.cifra-footer p.cifra-composer"))).text
+        compositor = compositor.split(".")[0]  # quero apenas o que aparece antes do primeiro ponto
+
+        # Adicionar o código da música no dicionário
+        return {
+            'ID': id_musica,
+            'Nome': nome_musica,
+            'Artista': nome_artista,
+            'Tom': tom,
+            'Capotraste': capotraste,
+            'Letra_cifra': letra_e_cifra,
+            'Compositor': compositor,
+            }
     except Exception as e:
-        print("Erro durante a busca:", e)
+        print(f"Erro ao processar {musica}: {e}")
+        return None
 
-    #   FIZEMOS ATE AQUI!!!!!
+# Carregar o dataframe.csv com músicas e tirar as últimas colunas
+caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
+df = pd.read_csv(caminho, sep=";", encoding="cp1252")
+print(df.head())
 
-    # Aguardar o carregamento completo da página
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.cifra_cnt")))
+# Variável para contar requisições feitas
+requisicoes_realizadas = 0
 
+# Gerar número inicial de músicas até a pausa
+musicas_ate_pausa = random.randint(44, 45)
 
-    # Capturar a letra e a cifra
-    letra_e_cifra_elements = driver.find_elements(By.CSS_SELECTOR, "div.cifra_cnt pre")
-    letra = "\n".join([element.text for element in letra_e_cifra_elements])
-    print(letra)
+# Configuração para salvar os dados
+for index, row in tqdm(df.iterrows(), total=len(df), desc="Processando letras"):
+    id_musica = row['ID']
+    musica = row['Nome']
+    artista = row['Artista']
+    ano = row['Ano']
 
-#teste
-buscar_letra_e_detalhes('Notícia boa', ' Fernando e Sorocaba', 5978)
-buscar_letra_e_detalhes('Construção', ' Chico Buarque', 50)
-buscar_letra_e_detalhes('Cardigan', ' Taylor Swift', 50)
-        
+    # Sanitizar o nome da música para garantir que não contenha caracteres inválidos
+    musica_sanitizada = musica.replace(' ', '_')
 
-     
-# Capturar o tom da música
-# tom_elements = driver.find_elements(By.CSS_SELECTOR, "div.cifra_cnt a")
+    # Nome do arquivo JSON para salvar os resultados
+    file_path = output_dir / f"{id_musica}_{musica_sanitizada}.json"
 
-        # # Capturar o nome da música e do artista
-        # nome_musica = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.CSS_SELECTOR, "h1.textStyle-primary"))
-        # ).text
-        
-        # nome_artista = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.CSS_SELECTOR, "h2.textStyle-secondary"))
-        # ).text
-        
-        # Adicionar o código da música ao dicionário
-#         return {
-#             'ID': id_musica,
-#             'Nome': nome_musica,
-#             'Artista': nome_artista,
-#             'Letra': letra
-#         }
-#     except Exception as e:
-#         print(f"Erro ao processar {musica}: {e}")
-#         return None
-
-# # Carregar o data.frame com músicas
-# df = pd.read_csv("musicas_completas.csv")  # Atualize o caminho do CSV
-
-# # Variável para contar requisições feitas
-# requisicoes_realizadas = 0
-
-# # Gerar número inicial de músicas até a pausa
-# musicas_ate_pausa = random.randint(44, 45)
-
-# # Configuração para salvar os dados
-# for index, row in tqdm(df.iterrows(), total=len(df), desc="Processando letras"):
-#     musica = row['Nome.x']
-#     artista = row['Artista.x']
-#     ano = row['Ano']
-#     id_musica = 1
-
-#     # Sanitizar o nome da música para garantir que não contenha caracteres inválidos
-#     musica_sanitizada = musica.replace(' ', '_')
-
-#     # Nome do arquivo JSON para salvar os resultados
-#     file_path = output_dir / f"{id_musica}_{musica_sanitizada}.json"
-
-#     # Verificar se o arquivo já existe
-#     if not file_path.exists():
-#         tqdm.write(f"Buscando letra: {musica} (Ano: {ano}, ID: {id_musica})")
-#         dados = buscar_letra_e_detalhes(musica, id_musica)
-#         requisicoes_realizadas += 1        
-#         # Se a letra for encontrada, salvar no arquivo JSON
-#         if dados:
-#             file_path.write_text(json.dumps(dados, ensure_ascii=False, indent=4), encoding='utf-8')
-        
+    # Verificar se o arquivo já existe
+    if not file_path.exists():
+        tqdm.write(f"Buscando letra: {musica} (Ano: {ano}, ID: {id_musica})")
+        dados = buscar_letra_e_detalhes(musica, f' {artista}', id_musica)
+        requisicoes_realizadas += 1        
+        # Se a letra for encontrada, salvar no arquivo JSON
+        if dados:
+            file_path.write_text(json.dumps(dados, ensure_ascii=False, indent=4), encoding='utf-8')
     
 
-#         # Pausa aleatória após atingir o número de músicas processadas
-#         if requisicoes_realizadas > 0 and requisicoes_realizadas % musicas_ate_pausa == 0:
-#             tempo_pausa = 0
-#             tqdm.write(f"Pausando por {int(tempo_pausa)} segundos... ({musicas_ate_pausa} músicas processadas)")
-#             time.sleep(tempo_pausa)  # Realizar a pausa
+        # Pausa aleatória após atingir o número de músicas processadas
+        if requisicoes_realizadas > 0 and requisicoes_realizadas % musicas_ate_pausa == 0:
+            tempo_pausa = 0
+            tqdm.write(f"Pausando por {int(tempo_pausa)} segundos... ({musicas_ate_pausa} músicas processadas)")
+            time.sleep(tempo_pausa)  # Realizar a pausa
 
-#             # Redefinir o número de músicas até a próxima pausa
-#             musicas_ate_pausa = random.randint(35, 40)
-#             print(musicas_ate_pausa)
+            # Redefinir o número de músicas até a próxima pausa
+            musicas_ate_pausa = random.randint(35, 40)
+            print(musicas_ate_pausa)
 
-# # Encerrar o WebDriver
-# driver.quit()
+# Encerrar o WebDriver
+driver.quit()
