@@ -79,7 +79,7 @@ def buscar_letra_e_detalhes(musica, artista, id_musica):
     except Exception as e:
         print(f"Erro ao processar {musica}: {e}")
         return None
-
+    
 # Carregar o dataframe.csv com músicas e tirar as últimas colunas
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="cp1252")
@@ -92,7 +92,9 @@ requisicoes_realizadas = 0
 musicas_ate_pausa = random.randint(44, 45)
 
 # Configuração para salvar os dados
-for index, row in tqdm(df.iterrows(), total=len(df), desc="Processando letras"):
+df_filtrado = df[df["ID"] >= 5978] # Auxilia caso a API pare em algum ID ou eu queira continuar em outro momento
+
+for index, row in tqdm(df_filtrado.iterrows(), total=len(df_filtrado), desc="Processando letras"):
     id_musica = row['ID']
     musica = row['Nome']
     artista = row['Artista']
