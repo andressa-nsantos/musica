@@ -160,6 +160,8 @@ output_dir = Path("processed")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 # função principal
+
+
 def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
     try:
         # 1) Abrir site
@@ -186,34 +188,41 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
         # ===============================
 
         # letra e cifra
-        letra_e_cifra = "\n".join(e.text for e in driver.find_elements(By.TAG_NAME, "pre"))
+        letra_e_cifra = "\n".join(
+            e.text for e in driver.find_elements(By.TAG_NAME, "pre"))
         # nome da música
         try:
-            nome_musica = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.cifra h1.t1"))).text.strip()
+            nome_musica = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "div.cifra h1.t1"))).text.strip()
         except TimeoutException:
             nome_musica = None
         # nome do artista
         try:
-            nome_artista = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href,'/artista/')]"))).text.strip()
+            nome_artista = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+                (By.XPATH, "//a[contains(@href,'/artista/')]"))).text.strip()
         except TimeoutException:
             nome_artista = artista
         # Tom
         try:
-            tom =  tom = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "#cifra_tom a"))).text.strip()
+            tom = tom = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "#cifra_tom a"))).text.strip()
         except NoSuchElementException:
             tom = None
         # Capotraste
         capotraste = None
         try:
-            capo_elem = driver.find_element(By.XPATH,"//*[contains(text(),'Capotraste')]")
+            capo_elem = driver.find_element(
+                By.XPATH, "//*[contains(text(),'Capotraste')]")
             capotraste = capo_elem.text.strip()
         except NoSuchElementException:
             capotraste = None
         # Compositor
         compositor = None
         try:
-            compositor_elem = driver.find_element(By.XPATH, "//*[contains(text(),'Composição')]")
-            compositor = compositor_elem.text.replace("Composição de", "").strip()
+            compositor_elem = driver.find_element(
+                By.XPATH, "//*[contains(text(),'Composição')]")
+            compositor = compositor_elem.text.replace(
+                "Composição de", "").strip()
         except NoSuchElementException:
             compositor = None
         # retorno
@@ -235,12 +244,13 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
         print(f"Erro ao processar {musica}: {e}")
         return None
 
+
 # ===============================
 # CARREGAR CSV
 # ===============================
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
-df_filtrado = df[df["ID"] >= 3601]  # 3601 a 4738
+df_filtrado = df[df["ID"] >= 4234]  # 3601 a 4738
 
 # ===============================
 # LOOP PRINCIPAL
