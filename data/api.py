@@ -250,7 +250,7 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
 # ===============================
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
-df_filtrado = df[df["ID"] >= 4579]  # 3601 a 4738
+df_filtrado = df[df["ID"] >= 4669]  # 3601 a 4738
 
 # ===============================
 # LOOP PRINCIPAL
