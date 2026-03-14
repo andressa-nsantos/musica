@@ -160,13 +160,11 @@ output_dir = Path("processed")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 # função principal
-
-
 def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
     try:
-        # 1) Abrir site
+        # abrir site
         driver.get("https://www.cifraclub.com.br")
-        # 2) Buscar
+        # buscar
         search_box = WebDriverWait(driver, 15).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='search']")))
 
@@ -178,14 +176,12 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
 
         first_suggestion.click()
 
-        # 5) Aguardar página da cifra
+        # aguardar página da cifra
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.TAG_NAME, "pre"))
         )
 
-        # ===============================
-        # EXTRAÇÕES
-        # ===============================
+        # extrações
 
         # letra e cifra
         letra_e_cifra = "\n".join(
@@ -202,13 +198,13 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
                 (By.XPATH, "//a[contains(@href,'/artista/')]"))).text.strip()
         except TimeoutException:
             nome_artista = artista
-        # Tom
+        # tom
         try:
             tom = tom = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "#cifra_tom a"))).text.strip()
         except NoSuchElementException:
             tom = None
-        # Capotraste
+        # capotraste
         capotraste = None
         try:
             capo_elem = driver.find_element(
@@ -216,7 +212,7 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
             capotraste = capo_elem.text.strip()
         except NoSuchElementException:
             capotraste = None
-        # Compositor
+        # compositor
         compositor = None
         try:
             compositor_elem = driver.find_element(
@@ -245,16 +241,12 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
         return None
 
 
-# ===============================
-# CARREGAR CSV
-# ===============================
+# carregar csv
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
-df_filtrado = df[df["ID"] >= 4669]  # 3601 a 4738
+df_filtrado = df[df["ID"] >= 4669]
 
-# ===============================
-# LOOP PRINCIPAL
-# ===============================
+# loop principal
 requisicoes_realizadas = 0
 musicas_ate_pausa = random.randint(40, 50)
 
