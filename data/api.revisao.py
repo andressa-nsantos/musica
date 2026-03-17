@@ -100,7 +100,7 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, link):
 # carregar csv
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\review_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
-df_filtrado = df[df["ID"] >= 3801]
+df_filtrado = df[df["ID"] >= 3994] # ESTÁ NO NÚMERO CORRETO
 
 # loop principal
 requisicoes_realizadas = 0

@@ -244,7 +244,7 @@ def buscar_letra_e_detalhes(musica, artista, id_musica, ano):
 # carregar csv
 caminho = r"C:\Users\andre\OneDrive\Desktop\musica\musica\data\raw_data.csv"
 df = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
-df_filtrado = df[df["ID"] >= 4669]
+df_filtrado = df[df["ID"] >= 4759]
 
 # loop principal
 requisicoes_realizadas = 0
