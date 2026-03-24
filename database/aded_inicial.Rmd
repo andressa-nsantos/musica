@@ -3,16 +3,31 @@ title: "Panorama Geral dos dados coletados no site CifraClub"
 author: "Andressa Santos"
 date: "2026-03-24"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Baixando os dados
-```{r, echo=FALSE}
+# Panorama geral os dados
+
+Das 5978 músicas do banco original, foram obtidas as cifras de 4829 no CifraClub; aproximadamente **80,78%** das canções.
+
+Foram coletadas **9 variáveis** para cada uma:
+
+- `...1`: índice automático  
+- `ID`: índice na tabela "dados_música" e proveniente do banco original  
+- `Nome`: nome da música  
+- `Artista`: nome do artista  
+- `Tom`: tom da música (em que escala a canção é tocada originalmente)  
+- `Capotraste`: variável binária que indica a presença ou não de capotraste (ferramenta que altera o formato dos acordes)
+- `Letra_cifra`: letra e cifra da música (algumas também com tablaturas)  
+- `Compositor`: escritores da música  
+- `Ano`: ano em que emplacou no top 100
+
+```{r, include=FALSE}
 library(readr)
 df <- read_csv("musicas.csv")
 head(df)
@@ -29,15 +44,16 @@ summary(as.numeric(musicas_ano))
 
 
 ### 2 - Visualização
+
+No boxplot e através dos dados sumarizados, é possível notar que 75% dos anos conta com ao menos 75 de suas 100 músicas registradas no site.
+
 ```{r, echo=FALSE}
 boxplot(musicas_ano,
         col = "green",
         main = "Musicas presentes no CifraClub por ano",
-        xlab = "Ano",
         ylab = "Quantidade")
 ```
 
-Obs.: A utilização do gráfico de barras pode parecer não adequada, pois a variável do eixo x é numérica. Porém, nesse caso, estamos considerando os anos como rótulos e não como valor contínuo.
 ```{r, echo=FALSE}
 anos <- as.numeric(names(musicas_ano))
 decadas <- floor(anos / 10) * 10
@@ -52,6 +68,10 @@ barplot(musicas_ano,
         ylab = "Quantidade",
         ylim = c(0,100))
 ```
+
+As faixas de cores representam décadas: do verde mais escuro que representa os anos 50 (com apenas 1958 e 1959) ao branco, referente aos anos entre 2010 e 2017.
+
+Obs.: A utilização do gráfico de barras pode parecer não adequada, pois a variável do eixo x é numérica. Porém, nesse caso, estamos considerando os anos como rótulos e não como valor contínuo.
 
 # Proporção de tons das músicas
 
@@ -71,8 +91,10 @@ barplot(musicas_tom,
         col = "purple",
         names.arg = names(musicas_tom),
         main = "Tom das musicas no CifraClub",
-        xlab = "Ano",
+        xlab = "Tom",
         ylim = c(0,800),
         ylab = "Quantidade",
         cex.names = 0.45)
 ```
+
+O gráfico ratifica as informações da tabela. Além disso, vemos que as escalas mais comuns tocadas em geral foram C, D, E, F, G e A (dó, ré, mi, fá, sol e lá).
