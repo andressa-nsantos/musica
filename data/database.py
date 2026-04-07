@@ -1,6 +1,7 @@
 import os
 import json
 import pandas as pd
+import re
 
 # caminho da pasta
 processed = r"C:\Users\andre\OneDrive\Desktop\musica\musica\processed"
@@ -57,6 +58,7 @@ def atribuir_ano(id_):
 dados["ID"] = dados["ID"].astype(int)
 dados["Ano"] = dados["ID"].apply(atribuir_ano)
 
-# fazer arquivo .csv e .xlsx
-dados.to_csv("musicas.csv", encoding="utf-8")
-dados.to_excel("musicas.xlsx")
+print(dados)
+# # fazer arquivo .csv e .xlsx
+# dados.to_csv("musicas.csv", encoding="utf-8")
+# dados.to_excel("musicas.xlsx")
